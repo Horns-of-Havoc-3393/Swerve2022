@@ -4,10 +4,16 @@
 
 package frc.robot;
 
+import javax.swing.text.Position;
+
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.commands.AutoBalance;
+import frc.robot.commands.FollowPathCmd;
 import frc.robot.commands.GyroResetCmd;
 import frc.robot.commands.SwerveAbsCmd;
+import frc.robot.commands.TurnPIDUpdateCmd;
+import frc.robot.subsystems.PositioningSubsystem;
 import frc.robot.subsystems.SwerveBaseSubsystem;
 import frc.robot.subsystems.SwerveModSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,11 +27,16 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  public static final SwerveBaseSubsystem swerveBaseSubsystem = new SwerveBaseSubsystem();
+
+  
+  public static final PositioningSubsystem positionSubsystem = new PositioningSubsystem();
+
+  public static final SwerveBaseSubsystem swerveBaseSubsystem = new SwerveBaseSubsystem(positionSubsystem);
 
   public static final SwerveAbsCmd swerveAbsCommand = new SwerveAbsCmd(swerveBaseSubsystem);
 
   public static final XboxController driveController = new XboxController(0);
+
 
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
@@ -42,8 +53,12 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     JoystickButton button_a = new JoystickButton(driveController, 1);
+    JoystickButton button_b = new JoystickButton(driveController, 2);
+    JoystickButton button_rb = new JoystickButton(driveController, 6);
 
-    button_a.whenPressed(new GyroResetCmd(swerveBaseSubsystem));
+    button_a.onTrue(new GyroResetCmd());
+    button_b.onTrue(new TurnPIDUpdateCmd(swerveBaseSubsystem));
+    button_rb.whileTrue(new AutoBalance(positionSubsystem, swerveBaseSubsystem));
   }
 
   /**
@@ -53,6 +68,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An ExampleCommand will run in autonomous
-    return swerveAbsCommand;
+    return new FollowPathCmd(swerveBaseSubsystem, "test.wpilib.json");
   }
 }

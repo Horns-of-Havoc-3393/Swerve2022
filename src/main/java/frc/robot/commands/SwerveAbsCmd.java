@@ -41,14 +41,13 @@ public class SwerveAbsCmd extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double xAxis = RobotContainer.driveController.getRawAxis(0);
-    double yAxis = RobotContainer.driveController.getRawAxis(1);
+    double xAxis = RobotContainer.driveController.getRawAxis(1);
+    double yAxis = RobotContainer.driveController.getRawAxis(0);
     double thetaAxis = RobotContainer.driveController.getRawAxis(4);
 
-    System.out.print(m_swerveBaseSubsystem.getBaseAngle());
 
 
-    m_swerveBaseSubsystem.setFieldOrented(xAxis, yAxis, thetaAxis);
+    m_swerveBaseSubsystem.setFieldOriented(xAxis*-1, yAxis, thetaAxis);
 
 
   }

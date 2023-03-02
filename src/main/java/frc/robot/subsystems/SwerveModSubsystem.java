@@ -18,8 +18,11 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogEncoder;
@@ -51,6 +54,11 @@ public class SwerveModSubsystem extends SubsystemBase {
   private DoublePublisher driveVelPub;
   private DoublePublisher driveVelTargetPub;
 
+  private DoubleEntry turnPSub;
+  private DoubleEntry turnISub;
+  private DoubleEntry turnDSub;
+
+
   
   public SwerveModSubsystem(int drivingID, int turningID, int encID, Boolean inverted, Boolean driveInverted, double encOffset) {
 
@@ -64,6 +72,14 @@ public class SwerveModSubsystem extends SubsystemBase {
     targetVelPub = table.getDoubleTopic("targetVelocity").publish();
     driveVelPub = table.getDoubleTopic("driveWheelVelocity").publish();
     driveVelTargetPub = table.getDoubleTopic("driveWheelVelTarget").publish();
+
+    turnPSub = inst.getDoubleTopic("/debug/turningP").getEntry(swerveModConstants.wheelP);
+    turnISub = inst.getDoubleTopic("/debug/turningI").getEntry(swerveModConstants.wheelI);
+    turnDSub = inst.getDoubleTopic("/debug/turningD").getEntry(swerveModConstants.wheelD);
+
+    turnPSub.set(swerveModConstants.wheelP);
+    turnISub.set(swerveModConstants.wheelI);
+    turnDSub.set(swerveModConstants.wheelD);
 
 
 
@@ -98,6 +114,10 @@ public class SwerveModSubsystem extends SubsystemBase {
 
   }
 
+  public void updatePID() {
+    turningPID.setPID(turnPSub.get(), turnISub.get(), turnDSub.get());
+  }
+
   private Rotation2d getAngle() {
     //double angle = relativeEncoder.getDistance();
     double voltage = encoder.getVoltage();
@@ -115,29 +135,40 @@ public class SwerveModSubsystem extends SubsystemBase {
     }
 
     angleR = Rotation2d.fromDegrees(360-angleR.getDegrees());
-
-    rotationPub.set(angleR.getDegrees());
     return angleR;
   }
 
-  private double convertDriveSpeed(double input, Boolean reversed) {
+
+  private double getWheelDistance() {
+    return convertDriveSpeed(driveMotor.getSelectedSensorPosition(), false, false);
+  } 
+
+  private double convertDriveSpeed(double input, Boolean toDrive, Boolean speed) {
 
     double output;
-    if(reversed){
-      output = input/2080/6.67*10;
-      output = output*((4*0.0254)*Math.PI);
+    if(toDrive){
+      output = input/((4*0.0254)*Math.PI);
+      output = output*2048;
+      if(speed) {output = output/10;}
     }else{
-      output = (input/(Math.PI*(4*0.0254)))*6.67;
+      output = input/2048;
+      output = output*((4*2.54/100)*Math.PI);
+      if(speed) {output = output*10;}
     }
     return output;
+  }
+
+
+  public SwerveModulePosition getModulePosition() {
+    return new SwerveModulePosition(getWheelDistance(), getAngle());
   }
 
 
   public void setState(SwerveModuleState targetState) {
     targetState = SwerveModuleState.optimize(targetState, getAngle());
 
-    driveMotor.set(TalonFXControlMode.Velocity, convertDriveSpeed(targetState.speedMetersPerSecond, true));
-    //turningMotor.set(TalonSRXControlMode.PercentOutput, turningPID.calculate(getAngle().getRadians(), targetState.angle.getRadians()));
+    driveMotor.set(TalonFXControlMode.Velocity, convertDriveSpeed(targetState.speedMetersPerSecond, true, true));
+    turningMotor.set(TalonSRXControlMode.PercentOutput, turningPID.calculate(getAngle().getRadians(), targetState.angle.getRadians()));
     
     targetAnglePub.set(targetState.angle.getDegrees());
     targetVelPub.set(targetState.speedMetersPerSecond);
@@ -151,6 +182,9 @@ public class SwerveModSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    
+
+    rotationPub.set(getAngle().getDegrees());
   }
 
   @Override

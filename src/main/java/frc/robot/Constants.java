@@ -29,19 +29,19 @@ public final class Constants {
         // Front Right module
         public static final class mod1 {
             public static final int turningMotorID = 1;
-            public static final int drivingMotorID = 8;
+            public static final int drivingMotorID = 5;
             public static final int encoderID = 0;
-            public static final double encoderOffset = 243.457006;
-            public static final Boolean inverted = false;
+            public static final double encoderOffset = 175.341779;
+            public static final Boolean inverted = true;
             public static final Boolean driveInverted = false;
         }
 
         // Back Right module
         public static final class mod2 {
             public static final int turningMotorID = 2;
-            public static final int drivingMotorID = 7;
+            public static final int drivingMotorID = 6;
             public static final int encoderID = 1;
-            public static final double encoderOffset = 121.464831;
+            public static final double encoderOffset = 64.863275;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = false;
         }
@@ -49,9 +49,9 @@ public final class Constants {
         // Back Left module
         public static final class mod3 {
             public static final int turningMotorID = 3;
-            public static final int drivingMotorID = 6;
+            public static final int drivingMotorID = 7;
             public static final int encoderID = 2;
-            public static final double encoderOffset = 10.019530;
+            public static final double encoderOffset = 119.267566;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = false;
         }
@@ -59,11 +59,11 @@ public final class Constants {
         // Front Left module
         public static final class mod4 {
             public static final int turningMotorID = 4;
-            public static final int drivingMotorID = 5;
+            public static final int drivingMotorID = 8;
             public static final int encoderID = 3;
-            public static final double encoderOffset = 176.308576;
+            public static final double encoderOffset = 9.228515;
             public static final Boolean inverted = true;
-            public static final Boolean driveInverted = false;
+            public static final Boolean driveInverted = true;
         }
 
     public static final class driveConstants {
@@ -78,12 +78,17 @@ public final class Constants {
         public static final double kWheelBase = 0.0508;
         public static final double kTrack = 0.0635;
 
-        public static final double kThetaMultiplier = -40;
-        public static final double kSpeedMultiplier = 5;
+        public static final double kThetaMultiplier = -180;
+        public static final double kSpeedMultiplier = 15;
 
         public static final double moduleRotateThreshold = 0.01;
 
-        public static final double kMaxSpeedMPS = 5;
+        public static final double kMaxSpeedMPS = 30;
+        public static final double kMaxAccelerationMPSPS = 1; // swerve module acceleration limit in M/s^2
+    }
+
+    public static final class autoConstants {
+        public static final double lookAhaid = 1; //time that the robot should look ahaid on its path during auto
     }
 
     }
