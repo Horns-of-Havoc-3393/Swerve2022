@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SensorCollection;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
@@ -30,6 +31,7 @@ import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.gameConstants;
 import frc.robot.Constants.swerveModConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
 
@@ -57,6 +59,9 @@ public class SwerveModSubsystem extends SubsystemBase {
   private DoubleEntry turnPSub;
   private DoubleEntry turnISub;
   private DoubleEntry turnDSub;
+
+  private Boolean prevStopped = false;
+  private double holdAngle;
 
 
   
@@ -96,6 +101,7 @@ public class SwerveModSubsystem extends SubsystemBase {
     config.slot0.kD = 0.46; // An acceleration of 1 rps/s results in 0.001 V output
 
     driveMotor.configAllSettings(config);
+    driveMotor.setNeutralMode(NeutralMode.Brake);
 
 
 
@@ -128,13 +134,15 @@ public class SwerveModSubsystem extends SubsystemBase {
 
     Rotation2d angleR = Rotation2d.fromDegrees(angle);
 
-    angleR = angleR.minus(offsetR);
+    if(driveConstants.calibrate==false){
+      angleR = angleR.minus(offsetR);
 
-    if (angleR.getDegrees() < 0) {
-      angleR = Rotation2d.fromDegrees(angleR.getDegrees()+360);
+      if (angleR.getDegrees() < 0) {
+        angleR = Rotation2d.fromDegrees(angleR.getDegrees()+360);
+      }
+
+      angleR = Rotation2d.fromDegrees(360-angleR.getDegrees());
     }
-
-    angleR = Rotation2d.fromDegrees(360-angleR.getDegrees());
     return angleR;
   }
 
@@ -149,10 +157,12 @@ public class SwerveModSubsystem extends SubsystemBase {
     if(toDrive){
       output = input/((4*0.0254)*Math.PI);
       output = output*2048;
+      output = output*6.67;
       if(speed) {output = output/10;}
     }else{
       output = input/2048;
       output = output*((4*2.54/100)*Math.PI);
+      output = output/6.67;
       if(speed) {output = output*10;}
     }
     return output;
@@ -160,15 +170,28 @@ public class SwerveModSubsystem extends SubsystemBase {
 
 
   public SwerveModulePosition getModulePosition() {
-    return new SwerveModulePosition(getWheelDistance(), getAngle());
+    if(gameConstants.blue){
+      return new SwerveModulePosition(getWheelDistance(), getAngle().div(-1));
+    }else{
+      return new SwerveModulePosition(getWheelDistance()*-1, getAngle().div(-1));
+    }
   }
 
 
   public void setState(SwerveModuleState targetState) {
     targetState = SwerveModuleState.optimize(targetState, getAngle());
 
-    driveMotor.set(TalonFXControlMode.Velocity, convertDriveSpeed(targetState.speedMetersPerSecond, true, true));
-    turningMotor.set(TalonSRXControlMode.PercentOutput, turningPID.calculate(getAngle().getRadians(), targetState.angle.getRadians()));
+    if(driveConstants.calibrate == false){
+      driveMotor.set(TalonFXControlMode.Velocity, convertDriveSpeed(targetState.speedMetersPerSecond, true, true));
+      if(Math.abs(targetState.speedMetersPerSecond)>driveConstants.moduleRotateThreshold){
+        turningMotor.set(TalonSRXControlMode.PercentOutput, turningPID.calculate(getAngle().getRadians(), targetState.angle.getRadians()));
+        prevStopped=false;
+      }else{
+        if(prevStopped == false){holdAngle = getAngle().getRadians();}
+        turningMotor.set(TalonSRXControlMode.PercentOutput, turningPID.calculate(getAngle().getRadians(), holdAngle));
+        prevStopped=true;
+      }
+    }
     
     targetAnglePub.set(targetState.angle.getDegrees());
     targetVelPub.set(targetState.speedMetersPerSecond);

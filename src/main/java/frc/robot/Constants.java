@@ -14,6 +14,10 @@ package frc.robot;
  */
 public final class Constants {
 
+    public static final class gameConstants {
+        public static final Boolean blue = true;
+    }
+
     public static final class swerveModConstants {
         public static final double wheelP = 3;
         public static final double wheelI = 0;
@@ -26,12 +30,13 @@ public final class Constants {
 
         public static final double kCPR = 1;
 
+
         // Front Right module
         public static final class mod1 {
             public static final int turningMotorID = 1;
             public static final int drivingMotorID = 5;
             public static final int encoderID = 0;
-            public static final double encoderOffset = 175.341779;
+            public static final double encoderOffset = 179.208966;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = false;
         }
@@ -41,7 +46,7 @@ public final class Constants {
             public static final int turningMotorID = 2;
             public static final int drivingMotorID = 6;
             public static final int encoderID = 1;
-            public static final double encoderOffset = 64.863275;
+            public static final double encoderOffset = 190.107402;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = false;
         }
@@ -51,9 +56,9 @@ public final class Constants {
             public static final int turningMotorID = 3;
             public static final int drivingMotorID = 7;
             public static final int encoderID = 2;
-            public static final double encoderOffset = 119.267566;
+            public static final double encoderOffset = 219.902321;
             public static final Boolean inverted = true;
-            public static final Boolean driveInverted = false;
+            public static final Boolean driveInverted = true;
         }
 
         // Front Left module
@@ -61,30 +66,26 @@ public final class Constants {
             public static final int turningMotorID = 4;
             public static final int drivingMotorID = 8;
             public static final int encoderID = 3;
-            public static final double encoderOffset = 9.228515;
+            public static final double encoderOffset = 282.832002;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = true;
         }
 
     public static final class driveConstants {
 
-        public static final double thetaP = 1;
-        public static final double thetaI = 0;
-        public static final double thetaD = 0;
-        public static final double thetaTolerance = 2;
-
-        public static final Float driveEncoderConversion = (float) (10*2048*6.67/(0.0254*4*(float) (Math.PI)));
+        
+        public static final Boolean calibrate = false;
 
         public static final double kWheelBase = 0.0508;
         public static final double kTrack = 0.0635;
 
-        public static final double kThetaMultiplier = -180;
-        public static final double kSpeedMultiplier = 15;
+        public static final double kThetaMultiplier = -20;
+        public static final double kSpeedMultiplier = 2;
 
-        public static final double moduleRotateThreshold = 0.01;
+        public static final double moduleRotateThreshold = 0.1;
 
         public static final double kMaxSpeedMPS = 30;
-        public static final double kMaxAccelerationMPSPS = 1; // swerve module acceleration limit in M/s^2
+        public static final double kMaxAcceleration = 3;
     }
 
     public static final class autoConstants {

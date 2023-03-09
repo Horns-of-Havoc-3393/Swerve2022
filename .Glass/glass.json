@@ -51,7 +51,8 @@
       }
     },
     "types": {
-      "/FMSInfo": "FMSInfo"
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Field": "Field2d"
     }
   },
   "NetworkTables Settings": {

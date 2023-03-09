@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.gameConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
 
 import java.lang.reflect.Field;
@@ -99,6 +100,10 @@ public class PositioningSubsystem extends SubsystemBase {
         return output;
     }
 
+    public double getYawAngle() {
+        return IMU.getAngle();
+    }
+
     public double getRotationVelocity() {
         return IMU.getRate();
     }
@@ -106,6 +111,17 @@ public class PositioningSubsystem extends SubsystemBase {
 
     public void zeroHeading(){
         IMU.reset();
+        if(gameConstants.blue==false){
+            IMU.setAngleAdjustment(180);
+        }
+    }
+
+    public void zeroPosition(){
+        if(gameConstants.blue){
+            odometry.resetPosition(Rotation2d.fromDegrees(0), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(0,0), Rotation2d.fromDegrees(0)));
+        }else{
+            odometry.resetPosition(Rotation2d.fromDegrees(180), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(16.25,6.858), Rotation2d.fromDegrees(180)));
+        }
     }
 
 }

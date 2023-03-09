@@ -47,7 +47,7 @@ public class SwerveAbsCmd extends CommandBase {
 
 
 
-    m_swerveBaseSubsystem.setFieldOriented(xAxis*-1, yAxis, thetaAxis);
+    m_swerveBaseSubsystem.setFieldOriented(xAxis*-1, yAxis, thetaAxis, false);
 
 
   }
