@@ -17,6 +17,8 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
+import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -25,7 +27,6 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
-import frc.robot.Constants.gameConstants;
 import frc.robot.Constants.swerveModConstants;
 import frc.robot.Constants.swerveModConstants.autoConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
@@ -65,6 +66,16 @@ public class SwerveBaseSubsystem extends SubsystemBase {
     DoublePublisher newYPub;
     DoublePublisher xAxisPub;
     DoublePublisher yAxisPub;
+    DoublePublisher distancePub;
+    DoublePublisher targetAngPub;
+    DoubleEntry lateralPPub;
+    DoubleEntry lateralIPub;
+    DoubleEntry lateralDPub;
+    DoubleEntry rotationalPPub;
+    DoubleEntry rotationalIPub;
+    DoubleEntry rotationalDPub;
+
+    BooleanSubscriber redSub;
 
     private final Translation2d frontLeftLoc;
     private final Translation2d backLeftLoc;
@@ -77,12 +88,17 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
     private PositioningSubsystem positioningSubsystem;
 
+    private PIDController lateralPID1;
+    private PIDController lateralPID2;
+    private PIDController rotationalPID;
+
 
 
 
     // Constants relating to acceleration limit
     private SlewRateLimiter xLimit = new SlewRateLimiter(driveConstants.kMaxAcceleration);
     private SlewRateLimiter yLimit = new SlewRateLimiter(driveConstants.kMaxAcceleration);
+    private SlewRateLimiter rLimit = new SlewRateLimiter(3);
 
 
 
@@ -103,8 +119,26 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         newYPub = auto.getDoubleTopic("NewY").publish();
         xAxisPub = auto.getDoubleTopic("xAxis").publish();
         yAxisPub = auto.getDoubleTopic("yAxis").publish();
+        distancePub = auto.getDoubleTopic("distance").publish();
+        targetAngPub = auto.getDoubleTopic("targetAngle").publish();
+        lateralPPub = auto.getDoubleTopic("lateralP").getEntry(autoConstants.lateralP);
+        lateralIPub = auto.getDoubleTopic("lateralI").getEntry(autoConstants.lateralI);
+        lateralDPub = auto.getDoubleTopic("lateralD").getEntry(autoConstants.lateralD);
+        rotationalPPub = auto.getDoubleTopic("rotationalP").getEntry(autoConstants.rotationalP);
+        rotationalIPub = auto.getDoubleTopic("rotationalI").getEntry(autoConstants.rotationalI);
+        rotationalDPub = auto.getDoubleTopic("rotationalD").getEntry(autoConstants.rotationalD);
+
+        lateralPPub.set(autoConstants.lateralP);
+        lateralIPub.set(autoConstants.lateralI);
+        lateralDPub.set(autoConstants.lateralD);
+        rotationalPPub.set(autoConstants.rotationalP);
+        rotationalIPub.set(autoConstants.rotationalI);
+        rotationalDPub.set(autoConstants.rotationalD);
 
         thetaPub = table.getDoubleTopic("foTheta").publish();
+
+        NetworkTable FMSInfo = inst.getTable("/FMSInfo");
+        redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
 
         frontLeftLoc = new Translation2d(-driveConstants.kTrack/2, driveConstants.kWheelBase/2);
         backLeftLoc = new Translation2d(-driveConstants.kTrack/2, -driveConstants.kWheelBase/2);
@@ -123,6 +157,12 @@ public class SwerveBaseSubsystem extends SubsystemBase {
             frontLeftLoc, frontRightLoc, backLeftLoc, backRightLoc
         );
 
+
+        lateralPID1 = new PIDController(lateralPPub.get(), lateralIPub.get(), lateralDPub.get());
+        lateralPID2 = new PIDController(lateralPPub.get(), lateralIPub.get(), lateralDPub.get());
+        rotationalPID = new PIDController(rotationalPPub.get(), rotationalIPub.get(), rotationalDPub.get());
+        rotationalPID.enableContinuousInput(-Math.PI, Math.PI);
+
         
 
     }
@@ -132,6 +172,10 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         frontRightMod.updatePID();
         backLeftMod.updatePID();
         backRightMod.updatePID();
+
+        lateralPID1.setPID(lateralPPub.get(), lateralIPub.get(), lateralDPub.get());
+        lateralPID2.setPID(lateralPPub.get(), lateralIPub.get(), lateralDPub.get());
+        rotationalPID.setPID(rotationalPPub.get(), rotationalIPub.get(), rotationalDPub.get());
     }
 
     
@@ -160,44 +204,54 @@ public class SwerveBaseSubsystem extends SubsystemBase {
     }
 
     public void toPoint(Pose2d targetPoint) {
-        double newX = targetPoint.getX()-positioningSubsystem.getPose().getX();
-        double newY = targetPoint.getY()-positioningSubsystem.getPose().getY();
-        double newTheta = targetPoint.getRotation().times(-1).minus(Rotation2d.fromDegrees(positioningSubsystem.getYawAngle())).getDegrees();
+        double newTheta = targetPoint.getRotation().times(-1).minus(Rotation2d.fromDegrees(180)).minus(Rotation2d.fromDegrees(positioningSubsystem.getYawAngle())).getRadians();
 
-        newXPub.set(newX);
-        newYPub.set(newY);
+        
+        Pose2d currentPose = positioningSubsystem.getPose();
+        
+        double distanceX = targetPoint.getX()-currentPose.getX();
+        double distanceY = targetPoint.getY()-currentPose.getY();
 
-        // if(Math.sqrt(newPose.getX()*newPose.getX()+newPose.getY()*newPose.getY())<1){
-        //     return;
-        // }
+        distancePub.set(Math.sqrt((distanceX*distanceX)+(distanceY*distanceY)));
+        targetAngPub.set(targetPoint.getRotation().getDegrees());
 
-        xAxisPub.set(newX*autoConstants.lookAhaid);
-        yAxisPub.set(newY*autoConstants.lookAhaid);
-
-        this.setFieldOriented(newX*autoConstants.lookAhaid/3,
-            newY*autoConstants.lookAhaid/3*-1,
-            newTheta*autoConstants.lookAhaid/30*-1,
-            true
-        );
+        if(redSub.get()){
+            this.setFieldOriented(lateralPID1.calculate(currentPose.getX(), targetPoint.getX())*-1,
+                lateralPID2.calculate(currentPose.getY(), targetPoint.getY()),
+                rotationalPID.calculate(0, newTheta),
+                true
+            );
+        }else{
+            this.setFieldOriented(lateralPID1.calculate(currentPose.getX(), targetPoint.getX()),
+                lateralPID2.calculate(currentPose.getY(), targetPoint.getY())*-1,
+                rotationalPID.calculate(0, newTheta),
+                true
+            );
+        }
     }
 
-    private double[] doAccelerationLimit(double xAxis, double yAxis){
+    private double[] doAccelerationLimit(double xAxis, double yAxis, double thetaAxis){
 
         double[] output = {
             xLimit.calculate(xAxis),
-            yLimit.calculate(yAxis)
+            yLimit.calculate(yAxis),
+            rLimit.calculate(thetaAxis)
         };
         return output;
+    }
+
+    public void setPosition(double x, double y){
+        positioningSubsystem.setPosition(x, y);
     }
 
     public void setFieldOriented(double xAxis, double yAxis, double thetaAxis, boolean absolute) {
         double theta = thetaAxis;
         if(absolute == false){
-            double[] axes = doAccelerationLimit(xAxis, yAxis);
+            double[] axes = doAccelerationLimit(xAxis, yAxis, thetaAxis);
             xAxis = axes[0]*driveConstants.kSpeedMultiplier;
             yAxis = axes[1]*driveConstants.kSpeedMultiplier;
+            thetaAxis = axes[2]*driveConstants.kThetaMultiplier;
 
-            theta = thetaAxis*driveConstants.kThetaMultiplier;
 
             yPub.set(yAxis*driveConstants.kSpeedMultiplier);
             xPub.set(xAxis*driveConstants.kSpeedMultiplier);
@@ -206,7 +260,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
         ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             xAxis, yAxis, 
-            theta,
+            thetaAxis,
             //theta+thetaPID.calculate(this.getBaseRate()-theta, 0),
             this.getBaseAngle()
         );
@@ -218,9 +272,10 @@ public class SwerveBaseSubsystem extends SubsystemBase {
     }
 
     public void setRelative(double xAxis, double yAxis, double thetaAxis) {
-        double[] axes = doAccelerationLimit(xAxis, yAxis);
+        double[] axes = doAccelerationLimit(xAxis, yAxis, thetaAxis);
         xAxis = axes[0];
         yAxis = axes[1];
+        thetaAxis = axes[2];
 
         double theta = thetaAxis*driveConstants.kThetaMultiplier;
 
@@ -230,7 +285,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
         ChassisSpeeds speeds;
 
-        if(gameConstants.blue){
+        if(!redSub.get()){
             speeds = new ChassisSpeeds(xAxis, yAxis, thetaAxis);
         }else{
             speeds = new ChassisSpeeds(-xAxis, -yAxis, thetaAxis);

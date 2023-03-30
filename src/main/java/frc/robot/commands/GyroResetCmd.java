@@ -29,7 +29,7 @@ public class GyroResetCmd extends CommandBase {
     @Override
     public void initialize(){
         positioningSubsystem.zeroHeading();
-        positioningSubsystem.zeroPosition();
+        positioningSubsystem.zeroPosition(false);
     }
 
 }

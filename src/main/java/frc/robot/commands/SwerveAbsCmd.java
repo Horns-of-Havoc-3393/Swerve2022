@@ -14,6 +14,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 /** An example command that uses an example subsystem. */
@@ -22,10 +25,15 @@ public class SwerveAbsCmd extends CommandBase {
 
   private final SwerveBaseSubsystem m_swerveBaseSubsystem;
 
+  private BooleanSubscriber redSub;
+
 
   
 
   public SwerveAbsCmd(SwerveBaseSubsystem swerveBaseSubsystem) {
+    NetworkTableInstance inst = NetworkTableInstance.getDefault();
+    NetworkTable FMSInfo = inst.getTable("/FMSInfo");
+    redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
 
     this.m_swerveBaseSubsystem = swerveBaseSubsystem;
 
@@ -41,13 +49,17 @@ public class SwerveAbsCmd extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double xAxis = RobotContainer.driveController.getRawAxis(1);
-    double yAxis = RobotContainer.driveController.getRawAxis(0);
+    double xAxis = RobotContainer.driveController.getRawAxis(0);
+    double yAxis = -RobotContainer.driveController.getRawAxis(1);
     double thetaAxis = RobotContainer.driveController.getRawAxis(4);
 
 
 
-    m_swerveBaseSubsystem.setFieldOriented(xAxis*-1, yAxis, thetaAxis, false);
+    if(redSub.get()){
+      m_swerveBaseSubsystem.setFieldOriented(-yAxis, -xAxis, thetaAxis, false);
+    }else{
+      m_swerveBaseSubsystem.setFieldOriented(yAxis, xAxis, thetaAxis, false);
+    }
 
 
   }

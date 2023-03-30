@@ -11,13 +11,16 @@ import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.commands.AutoBalance;
 import frc.robot.commands.FollowPathCmd;
 import frc.robot.commands.GyroResetCmd;
+import frc.robot.commands.SimpleAutoCmd;
 import frc.robot.commands.SwerveAbsCmd;
 import frc.robot.commands.TurnPIDUpdateCmd;
+import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.PositioningSubsystem;
 import frc.robot.subsystems.SwerveBaseSubsystem;
 import frc.robot.subsystems.SwerveModSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -32,6 +35,8 @@ public class RobotContainer {
   public static final PositioningSubsystem positionSubsystem = new PositioningSubsystem();
 
   public static final SwerveBaseSubsystem swerveBaseSubsystem = new SwerveBaseSubsystem(positionSubsystem);
+
+  public static final ArmSubsystem armSubsystem = new ArmSubsystem();
 
   public static final SwerveAbsCmd swerveAbsCommand = new SwerveAbsCmd(swerveBaseSubsystem);
 
@@ -54,11 +59,11 @@ public class RobotContainer {
   private void configureButtonBindings() {
     JoystickButton button_a = new JoystickButton(driveController, 1);
     JoystickButton button_b = new JoystickButton(driveController, 2);
-    JoystickButton button_rb = new JoystickButton(driveController, 6);
+    //JoystickButton button_rb = new JoystickButton(driveController, 6);
 
     button_a.onTrue(new GyroResetCmd());
     button_b.onTrue(new TurnPIDUpdateCmd(swerveBaseSubsystem));
-    button_rb.whileTrue(new AutoBalance(positionSubsystem, swerveBaseSubsystem));
+    //button_rb.whileTrue(new AutoBalance(positionSubsystem, swerveBaseSubsystem));
   }
 
   /**
@@ -67,6 +72,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return new FollowPathCmd(swerveBaseSubsystem, "test.wpilib.json");
+    return new FollowPathCmd(swerveBaseSubsystem);
+    //return new SimpleAutoCmd(swerveBaseSubsystem);
   }
 }

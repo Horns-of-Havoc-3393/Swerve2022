@@ -4,9 +4,12 @@
 
 package frc.robot;
 
+import java.sql.DriverPropertyInfo;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.DriverArmCmd;
 import frc.robot.commands.SwerveAbsCmd;
 import frc.robot.commands.TestCmd;
 
@@ -81,6 +84,7 @@ public class Robot extends TimedRobot {
     }
 
     RobotContainer.swerveBaseSubsystem.setDefaultCommand(new SwerveAbsCmd(RobotContainer.swerveBaseSubsystem));
+    //RobotContainer.armSubsystem.setDefaultCommand(new DriverArmCmd(RobotContainer.armSubsystem));
   }
 
   /** This function is called periodically during operator control. */

@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -15,7 +16,6 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.gameConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
 
 import java.lang.reflect.Field;
@@ -27,6 +27,8 @@ public class PositioningSubsystem extends SubsystemBase {
 
     DoublePublisher xPub;
     DoublePublisher yPub;
+
+    BooleanSubscriber redSub;
 
     SwerveDriveOdometry odometry;
 
@@ -62,6 +64,9 @@ public class PositioningSubsystem extends SubsystemBase {
         field = new Field2d();
         xPub = table.getDoubleTopic("xPosition").publish();
         yPub = table.getDoubleTopic("yPosition").publish();
+
+        NetworkTable FMSInfo = inst.getTable("/FMSInfo");
+        redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
         
         IMU.calibrate();
 
@@ -76,6 +81,14 @@ public class PositioningSubsystem extends SubsystemBase {
     public void initOdometry(SwerveBaseSubsystem swerveBaseSubsystem){
         this.swerveBaseSubsystem = swerveBaseSubsystem;
         odometry = new SwerveDriveOdometry(swerveKinematics, IMU.getRotation2d(), swerveBaseSubsystem.getSwervePositions());
+    }
+
+    public void setPosition(double x, double y){
+        if(redSub.get()){
+            odometry.resetPosition(Rotation2d.fromDegrees(180), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(16.54-x,y), Rotation2d.fromDegrees(180)));
+        }else{
+            odometry.resetPosition(Rotation2d.fromDegrees(0), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(x,y), Rotation2d.fromDegrees(0)));
+        }
     }
 
     @Override
@@ -111,13 +124,18 @@ public class PositioningSubsystem extends SubsystemBase {
 
     public void zeroHeading(){
         IMU.reset();
-        if(gameConstants.blue==false){
+        if(redSub.get()){
             IMU.setAngleAdjustment(180);
+        }else{
+            IMU.setAngleAdjustment(0);
         }
     }
 
-    public void zeroPosition(){
-        if(gameConstants.blue){
+    public void zeroPosition(Boolean update){
+        if(update){
+            odometry.resetPosition(IMU.getRotation2d(), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(0,0), IMU.getRotation2d()));
+        }
+        if(!redSub.get()){
             odometry.resetPosition(Rotation2d.fromDegrees(0), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(0,0), Rotation2d.fromDegrees(0)));
         }else{
             odometry.resetPosition(Rotation2d.fromDegrees(180), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(16.25,6.858), Rotation2d.fromDegrees(180)));

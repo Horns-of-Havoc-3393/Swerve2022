@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
@@ -31,7 +32,6 @@ import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.gameConstants;
 import frc.robot.Constants.swerveModConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
 
@@ -60,6 +60,8 @@ public class SwerveModSubsystem extends SubsystemBase {
   private DoubleEntry turnISub;
   private DoubleEntry turnDSub;
 
+  private BooleanSubscriber redSub;
+
   private Boolean prevStopped = false;
   private double holdAngle;
 
@@ -85,6 +87,9 @@ public class SwerveModSubsystem extends SubsystemBase {
     turnPSub.set(swerveModConstants.wheelP);
     turnISub.set(swerveModConstants.wheelI);
     turnDSub.set(swerveModConstants.wheelD);
+
+    NetworkTable FMSInfo = inst.getTable("/FMSInfo");
+    redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
 
 
 
@@ -170,10 +175,10 @@ public class SwerveModSubsystem extends SubsystemBase {
 
 
   public SwerveModulePosition getModulePosition() {
-    if(gameConstants.blue){
+    if(!redSub.get()){
       return new SwerveModulePosition(getWheelDistance(), getAngle().div(-1));
     }else{
-      return new SwerveModulePosition(getWheelDistance()*-1, getAngle().div(-1));
+      return new SwerveModulePosition(getWheelDistance(), getAngle().div(-1));
     }
   }
 
