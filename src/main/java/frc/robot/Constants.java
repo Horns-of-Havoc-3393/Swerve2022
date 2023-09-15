@@ -16,15 +16,17 @@ public final class Constants {
 
 
     public static final class armConstants {
-        public static final int Pitch1ID = 16; // CAN ID of one of the motors that controls the pitch of the arm
-        public static final int Pitch2ID = 17; // CAN ID of the other mootor used to control the pitch of the arm
+        public static final int Pitch1ID = 11; // CAN ID of one of the motors that controls the pitch of the arm
 
-        public static final int ExtendID = 15; // CAN ID of the motor that extends and retracts arm
+        public static final int ExtendID = 10; // CAN ID of the motor that extends and retracts arm
 
-        public static final double maxExtent = 6.867919921875;
+        public static final int intake1ID = 16;
+        public static final int intake2ID = 17;
+
+        public static final double maxExtent = 1;
         public static final double armLength = 1; //length (in meters) of the arm
 
-        public static final double pitchOffset = -25;
+        public static final double pitchOffset = -30;
 
 
 
@@ -52,7 +54,7 @@ public final class Constants {
             public static final int turningMotorID = 1; // CAN ID of the motor used for turning
             public static final int drivingMotorID = 5; // CAN ID of the motor used for driving
             public static final int encoderID = 0; // Analogue ID of the encoder used for this module (STARTS AT 0)
-            public static final double encoderOffset = 179.208966; // Offset of the encoder (in degrees)
+            public static final double encoderOffset = 37.001949; // Offset of the encoder (in degrees)
             public static final Boolean inverted = true; // Inverts the turning motor (change if the motor just accelerates in one direction)
             public static final Boolean driveInverted = false; // Inverts the drive motor (change if the wheel spins backwards)
         }
@@ -102,7 +104,7 @@ public final class Constants {
         public static final double moduleRotateThreshold = 0.1; // The speed (in M/s) that a module will have to be instructed to move for the module to rotate
 
         public static final double kMaxSpeedMPS = 30; // Speed limiter of the robot, should be similar to kSpeedMultiplier
-        public static final double kMaxAcceleration = 3; // Max acceleration of the robot (when 3 the robot will accelerate to full speed in 1/3 of a second)
+        public static final double kMaxAcceleration = 4; // Max acceleration of the robot (when 3 the robot will accelerate to full speed in 1/3 of a second)
     }
 
     public static final class autoConstants {

@@ -20,35 +20,27 @@ public class DriverArmCmd extends CommandBase{
     
     @Override
     public void execute() {
-        int povAngle = RobotContainer.driveController.getPOV();
 
-        if(RobotContainer.driveController.getRawButton(5)){
-            armSubsystem.sol1(true);
-        }else{
-            armSubsystem.sol1(false);
-        }
-        if(RobotContainer.driveController.getRawButton(6)){
-            armSubsystem.sol2(true);
-        }else{
-            armSubsystem.sol2(false);
-        }
+        
+    //     if(RobotContainer.armController.getRawButton(6)){
+    //         armSubsystem.sol2(true);
+    //     }else{
+    //         armSubsystem.sol2(false);
+    //     }
+    //     if(RobotContainer.armController.getRawButton(5)){
+    //         armSubsystem.sol1(true);
+    //         armSubsystem.sol2(true);
+    //     }else{
+    //         armSubsystem.sol1(false);
+    //     }
 
-        if(povAngle == -1){
-            armSubsystem.stop();
-            return;
-        }
+            
 
-        // if(povAngle<120 && povAngle>40){
-        //     armSubsystem.extendArm(0.4);
-        // }else if(povAngle>220 && povAngle<320){
-        //     armSubsystem.extendArm(-0.4);
-        // }
+    //     armSubsystem.extendArm(RobotContainer.armController.getRawAxis(5));
+    //     armSubsystem.turnArm(RobotContainer.armController.getRawAxis(1));
 
-        if(povAngle<50 || povAngle>310){
-            armSubsystem.turnArm(-0.6);
-        }else if(povAngle>110 && povAngle<230){
-            armSubsystem.turnArm(0.4);
-        }
-        return;
+    //     armSubsystem.setIntakeSpeed(((RobotContainer.armController.getRawAxis(2))-(RobotContainer.armController.getRawAxis(3))));
+
+    //     return;
     }
 }

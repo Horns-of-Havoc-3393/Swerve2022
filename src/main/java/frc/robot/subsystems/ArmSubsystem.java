@@ -4,10 +4,6 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.BooleanPublisher;
@@ -28,157 +24,180 @@ import frc.robot.Constants.armConstants;
 
 public class ArmSubsystem extends SubsystemBase {
 
-    private CANSparkMax Pitch;
-    private RelativeEncoder pitchEncoder;
+    // // private CANSparkMax Pitch;
+    // // private RelativeEncoder pitchEncoder;
 
-    private CANSparkMax Extend;
-    private RelativeEncoder extendEncoder;
+    // // private CANSparkMax Extend;
+    // // private RelativeEncoder extendEncoder;
 
-    private AnalogInput pitchAnalog;
+    // private TalonSRX intake1;
+    // private TalonSRX intake2;
 
-    private Double pitch;
-    private Double length;
+    // private AnalogInput pitchAnalog;
 
-    private DoublePublisher pitchPub;
-    private DoublePublisher lengthPub;
-    private DoublePublisher lengthRawPub;
-    private BooleanPublisher limitPub;
+    // private Double pitch;
+    // private Double length;
 
-    private AHRS IMU = new AHRS(SPI.Port.kMXP);
+    // private DoublePublisher pitchPub;
+    // private DoublePublisher lengthPub;
+    // private DoublePublisher lengthRawPub;
+    // private BooleanPublisher limitPub;
 
-    private Compressor compressor;
-    private DoubleSolenoid clawSolenoid1;
-    private DoubleSolenoid clawSolenoid2;
+    // private AHRS IMU = new AHRS(SPI.Port.kMXP);
 
-    private DigitalInput limitSwitch;
-    private Boolean homing = false;
-    private Double home=0.0;
+    // private Compressor compressor;
+    // private DoubleSolenoid clawSolenoid1;
+    // private DoubleSolenoid clawSolenoid2;
 
-    private SlewRateLimiter turnLimit = new SlewRateLimiter(3);
+    // private DigitalInput limitSwitch;
+    // private Boolean homing = true;
+    // private Double home=0.0;
 
-    public ArmSubsystem() {
-        NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        NetworkTable table = inst.getTable("/debug/arm");
-        pitchPub = table.getDoubleTopic("pitch").publish();
-        lengthPub = table.getDoubleTopic("length").publish();
-        lengthRawPub = table.getDoubleTopic("lengthRaw").publish();
-        limitPub = table.getBooleanTopic("limitSwitch").publish();
+    // private SlewRateLimiter turnLimit = new SlewRateLimiter(3);
 
-        compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-        clawSolenoid1 = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
-        clawSolenoid2 = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 2, 3);
+    // public ArmSubsystem() {
+    //     NetworkTableInstance inst = NetworkTableInstance.getDefault();
+    //     NetworkTable table = inst.getTable("/debug/arm");
+    //     pitchPub = table.getDoubleTopic("pitch").publish();
+    //     lengthPub = table.getDoubleTopic("length").publish();
+    //     lengthRawPub = table.getDoubleTopic("lengthRaw").publish();
+    //     limitPub = table.getBooleanTopic("limitSwitch").publish();
 
-        limitSwitch = new DigitalInput(0);
+    //     compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+    //     clawSolenoid1 = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 3, 0);
+    //     clawSolenoid2 = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 1, 2);
 
-        compressor.enableDigital();
+    //     limitSwitch = new DigitalInput(0);
 
-        pitchAnalog = new AnalogInput(4);
+    //     compressor.enableDigital();
+
+    //     pitchAnalog = new AnalogInput(4);
         
-        Pitch = new CANSparkMax(armConstants.Pitch1ID, MotorType.kBrushless);
+    //     Pitch = new CANSparkMax(armConstants.Pitch1ID, MotorType.kBrushless);
 
-        Extend = new CANSparkMax(armConstants.ExtendID, MotorType.kBrushless);
+    //     Extend = new CANSparkMax(armConstants.ExtendID, MotorType.kBrushless);
 
-
-        Pitch.setInverted(armConstants.Pitch1Invert);
-        Extend.setInverted(armConstants.ExtendInvert);
-        extendEncoder = Extend.getEncoder();
-
-        homing = false;
-    }
-
-    public void runHome(){
-        if(homing){
-            if(!limitSwitch.get()){
-                Extend.set(TalonSRXControlMode.PercentOutput, -0.2);
-            }else{
-                Extend.set(TalonSRXControlMode.PercentOutput, 0);
-                homing = false;
-                home = Extend.getSelectedSensorPosition();
-            }
-        }
-        return;
-    }
-
-    public void sol1(Boolean extend){
-        if(extend){
-            clawSolenoid1.set(Value.kForward);
-        }else{
-            clawSolenoid1.set(Value.kReverse);
-        }
-    }
-
-    public void sol2(Boolean extend){
-        if(extend){
-            clawSolenoid2.set(Value.kForward);
-        }else{
-            clawSolenoid2.set(Value.kReverse);
-        }
-    }
-
-    public void grab(){
-        clawSolenoid1.set(Value.kForward);
-        clawSolenoid2.set(Value.kForward);
-    }
-
-    public void retract(){
-        clawSolenoid1.set(Value.kReverse);
-        clawSolenoid2.set(Value.kReverse);
-    }
-
-    public void relax(){
-        clawSolenoid1.set(Value.kOff);
-        clawSolenoid2.set(Value.kOff);
-    }
+    //     intake1 = new TalonSRX(armConstants.intake1ID);
+    //     intake2 = new TalonSRX(armConstants.intake2ID);
 
 
-    public void turnArm(double speed) {
-        speed = turnLimit.calculate(speed-(1-Math.abs(getArmPitch().getDegrees()/90))*0.4);
-        Pitch1.set(TalonSRXControlMode.PercentOutput, speed);
-        Pitch2.set(TalonSRXControlMode.PercentOutput, speed);
-    }
+    //     Pitch.setInverted(armConstants.Pitch1Invert);
+    //     Extend.setInverted(armConstants.ExtendInvert);
+    //     extendEncoder = Extend.getEncoder();
+    //     pitchEncoder = Pitch.getEncoder();
 
-    public void extendArm(double speed){
-        if(!homing){
-            Extend.set(TalonSRXControlMode.PercentOutput, speed);
-        }
-    }
-
-    // public Boolean[] getConstraints(double turnSpeed, double extendSpeed){
-
+    //     homing = true;
     // }
 
-    public Rotation2d getArmPitch(){
-        double voltage = pitchAnalog.getVoltage();
-        double angled = voltage*72;
-        Rotation2d angle = Rotation2d.fromDegrees(angled*1.25*-1);
-        angle = angle.minus(Rotation2d.fromDegrees(armConstants.pitchOffset));
+    // public void runHome(){
+    //     // if(homing){
+    //     //     if(!limitSwitch.get()){
+    //     //         Extend.set(-0.4);
+    //     //     }else{
+    //     //         Extend.set(0);
+    //     //         homing = false;
+    //     //         extendEncoder.setPosition(0.0);
+    //     //     }
+    //     // }
+    //     return;
+    // }
 
-        pitchPub.set(angle.getDegrees());
-        return angle;
-    }
+    // public void setIntakeSpeed(Double speed){
+    //     intake1.set(TalonSRXControlMode.PercentOutput, -speed);
+    //     intake2.set(TalonSRXControlMode.PercentOutput, speed);
+    // }
 
-    public double getArmLen(){
-        Extend.set(TalonSRXControlMode.PercentOutput, -0.15);
-        lengthRawPub.set((Extend.getSelectedSensorPosition()-home)/4096/6.867919921875);
-        length = (Extend.getSelectedSensorPosition()-home)/4096/6.867919921875;
-        lengthPub.set(length);
-        return length;
-    }
+    // public void sol1(Boolean extend){
+    //     if(extend){
+    //         clawSolenoid1.set(Value.kForward);
+    //     }else{
+    //         clawSolenoid1.set(Value.kReverse);
+    //     }
+    // }
 
-    public void stop(){
-        turnArm(0);
-        if(!homing){
-            Extend.set(TalonSRXControlMode.PercentOutput, 0);
-        }
-    }
+    // public void sol2(Boolean extend){
+    //     if(extend){
+    //         clawSolenoid2.set(Value.kForward);
+    //     }else{
+    //         clawSolenoid2.set(Value.kReverse);
+    //     }
+    // }
 
-    @Override
-    public void periodic() {
-        runHome();
-        limitPub.set(limitSwitch.get());
-        Extend.set(TalonSRXControlMode.PercentOutput, -0.25);  
-        System.out.print(home);
-        getArmPitch();
-        getArmLen();
-    }
+    // public void grab(){
+    //     clawSolenoid1.set(Value.kForward);
+    //     clawSolenoid2.set(Value.kForward);
+    // }
+
+    // public void retract(){
+    //     clawSolenoid1.set(Value.kReverse);
+    //     clawSolenoid2.set(Value.kReverse);
+    // }
+
+    // public void relax(){
+    //     clawSolenoid1.set(Value.kOff);
+    //     clawSolenoid2.set(Value.kOff);
+    // }
+
+    // private double constrainArm(Double speed){
+    //     double output = speed;
+    //     if(getArmPitch().getDegrees()<=-20){
+    //         output = Math.min(0, speed);
+    //     }
+    //     if(getArmPitch().getDegrees()>=70){
+    //         output = Math.max(0,speed);
+    //     }
+    //     return output;
+    // }
+
+
+    // public void turnArm(double speed) {
+    //     speed = turnLimit.calculate(speed-(1-Math.abs(getArmPitch().getDegrees()/90))*0);
+    //     speed = constrainArm(speed);
+    //     Pitch.set(speed);
+    // }
+
+    // public void extendArm(double speed){
+    //     if(!homing){
+    //         Extend.set(-0.4);
+    //     }
+    //     Extend.set(-0.4);
+    // }
+
+    // // public Boolean[] getConstraints(double turnSpeed, double extendSpeed){
+
+    // // }
+
+    // public Rotation2d getArmPitch(){
+    //     double voltage = pitchAnalog.getVoltage();
+    //     double angled = voltage*72;
+    //     Rotation2d angle = Rotation2d.fromDegrees(angled*1.25*-1);
+    //     angle = angle.minus(Rotation2d.fromDegrees(armConstants.pitchOffset));
+
+    //     pitchPub.set(angle.getDegrees());
+    //     return angle;
+    // }
+
+    // public double getArmLen(){
+    // //     lengthRawPub.set((extendEncoder.getPosition()));
+    // //     length = (extendEncoder.getPosition()/armConstants.maxExtent);
+    // //     lengthPub.set(length);
+    // //     return length;
+    // // }
+
+    // public void stop(){
+    //     // turnArm(0);
+    //     // if(!homing){
+    //     //     Extend.set(0);
+    //     // }
+    // }
+
+    // @Override
+    // public void periodic() {
+    //     runHome();
+    //     limitPub.set(limitSwitch.get());
+    //     Extend.set(-0.25);  
+    //     System.out.print(home);
+    //     getArmPitch();
+    //     getArmLen();
+    // }
 }
