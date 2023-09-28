@@ -1,32 +1,21 @@
 package frc.robot.subsystems;
 
-import javax.swing.text.Position;
-
-import org.opencv.core.RotatedRect;
-
-import com.kauailabs.navx.frc.AHRS;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.RobotContainer;
 import frc.robot.Constants.swerveModConstants;
 import frc.robot.Constants.swerveModConstants.autoConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
@@ -277,8 +266,6 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         yAxis = axes[1];
         thetaAxis = axes[2];
 
-        double theta = thetaAxis*driveConstants.kThetaMultiplier;
-
         yPub.set(yAxis*driveConstants.kSpeedMultiplier);
         xPub.set(xAxis*driveConstants.kSpeedMultiplier);
         thetaPub.set(thetaAxis*driveConstants.kThetaMultiplier);
@@ -300,7 +287,10 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         
         SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, driveConstants.kMaxSpeedMPS);
 
-        double[] swerveTargets = {(targetStates[0].angle.getDegrees()),(targetStates[1].angle.getDegrees()),(targetStates[2].angle.getDegrees()),(targetStates[3].angle.getDegrees())};
+        double[] swerveTargets = {(targetStates[0].angle.getDegrees()),
+            (targetStates[1].angle.getDegrees()),
+            (targetStates[2].angle.getDegrees()),
+            (targetStates[3].angle.getDegrees())};
         SmartDashboard.putNumberArray("swerveTargets", swerveTargets);
         frontLeftMod.setState(targetStates[0]);
         backLeftMod.setState(targetStates[1]);

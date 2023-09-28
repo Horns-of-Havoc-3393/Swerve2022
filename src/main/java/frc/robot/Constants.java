@@ -74,7 +74,7 @@ public final class Constants {
             public static final int turningMotorID = 3;
             public static final int drivingMotorID = 7;
             public static final int encoderID = 2;
-            public static final double encoderOffset = 219.902321;
+            public static final double encoderOffset = 155.65428093600002;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = true;
         }
@@ -84,7 +84,7 @@ public final class Constants {
             public static final int turningMotorID = 4;
             public static final int drivingMotorID = 8;
             public static final int encoderID = 3;
-            public static final double encoderOffset = 282.832002;
+            public static final double encoderOffset = 144.931625;
             public static final Boolean inverted = true;
             public static final Boolean driveInverted = true;
         }
@@ -99,12 +99,12 @@ public final class Constants {
         public static final double kTrack = 0.0635; // The track width of the robot (Side-to-side distance between wheels)
 
         public static final double kThetaMultiplier = -20; // Degrees/sec that the robot will turn when at full stick during teleop
-        public static final double kSpeedMultiplier = 3.5; // Meters/sec that the robot will move when at full stick during teleop
+        public static final double kSpeedMultiplier = 3; // Meters/sec that the robot will move when at full stick during teleop
 
         public static final double moduleRotateThreshold = 0.1; // The speed (in M/s) that a module will have to be instructed to move for the module to rotate
 
         public static final double kMaxSpeedMPS = 30; // Speed limiter of the robot, should be similar to kSpeedMultiplier
-        public static final double kMaxAcceleration = 4; // Max acceleration of the robot (when 3 the robot will accelerate to full speed in 1/3 of a second)
+        public static final double kMaxAcceleration = 2; // Max acceleration of the robot (when 3 the robot will accelerate to full speed in 1/3 of a second)
     }
 
     public static final class autoConstants {

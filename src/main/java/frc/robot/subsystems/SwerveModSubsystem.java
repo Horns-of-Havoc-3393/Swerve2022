@@ -4,12 +4,8 @@
 
 package frc.robot.subsystems;
 
-import java.util.List;
-
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.SensorCollection;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -18,19 +14,14 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.swerveModConstants;
 import frc.robot.Constants.swerveModConstants.driveConstants;
@@ -46,7 +37,6 @@ public class SwerveModSubsystem extends SubsystemBase {
 
   private final AnalogInput encoder;
 
-  private final int encID;
   private final Rotation2d offsetR;
 
   private DoublePublisher rotationPub;
@@ -115,7 +105,6 @@ public class SwerveModSubsystem extends SubsystemBase {
     turningMotor = new TalonSRX(turningID);
     turningMotor.setInverted(inverted);
 
-    this.encID = encID;
     offsetR = Rotation2d.fromDegrees(encOffset);
 
     encoder = new AnalogInput(encID);
