@@ -20,6 +20,7 @@ public final class Constants {
 
         public static final int ExtendID = 10; // CAN ID of the motor that extends and retracts arm
 
+        // Intake CAN ID
         public static final int intake1ID = 16;
         public static final int intake2ID = 17;
 
@@ -37,6 +38,8 @@ public final class Constants {
     }
 
     public static final class swerveModConstants {
+
+        // PID values for swerve
         public static final double wheelP = 3;
         public static final double wheelI = 0;
         public static final double wheelD = 0;
@@ -110,7 +113,8 @@ public final class Constants {
     public static final class autoConstants {
         public static final double lookAhaid = 0; //time that the robot should look ahaid on its path during auto
 
-        public static final double lateralP = 1.8;
+        // PID values for movement during auto
+        public static final double lateralP = 1.8; 
         public static final double lateralI = 0.001;
         public static final double lateralD = 0.1;
 
@@ -118,8 +122,10 @@ public final class Constants {
         public static final double rotationalI = 0;
         public static final double rotationalD = 0;
 
+        // Selected path for auto
         public static final String[] selectedPath = paths.taxi2;
 
+        // Lists of trajectories
         public static final class paths {
             public static final String[] taxi = {"forward", "backward", "taxi"};
             public static final String[] taxi2 = {"forward2", "backward2", "taxi2"};
