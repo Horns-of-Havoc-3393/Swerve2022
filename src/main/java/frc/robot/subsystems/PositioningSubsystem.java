@@ -47,7 +47,7 @@ public class PositioningSubsystem extends SubsystemBase {
 
     public PositioningSubsystem() {
 
-        
+        // NetworkTable init for Telemetry
         frontLeftLoc = new Translation2d(-driveConstants.kTrack/2, driveConstants.kWheelBase/2);
         backLeftLoc = new Translation2d(-driveConstants.kTrack/2, -driveConstants.kWheelBase/2);
         frontRightLoc = new Translation2d(driveConstants.kTrack/2, driveConstants.kWheelBase/2);
@@ -66,6 +66,8 @@ public class PositioningSubsystem extends SubsystemBase {
         NetworkTable FMSInfo = inst.getTable("/FMSInfo");
         redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
         
+
+        // IMU init stuff
         IMU.calibrate();
 
         new Thread(()-> {
@@ -81,6 +83,7 @@ public class PositioningSubsystem extends SubsystemBase {
         odometry = new SwerveDriveOdometry(swerveKinematics, IMU.getRotation2d(), swerveBaseSubsystem.getSwervePositions());
     }
 
+    // Resets the saved odometry position depending on team
     public void setPosition(double x, double y){
         if(redSub.get()){
             odometry.resetPosition(Rotation2d.fromDegrees(180), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(16.54-x,y), Rotation2d.fromDegrees(180)));
@@ -98,12 +101,13 @@ public class PositioningSubsystem extends SubsystemBase {
     }
 
 
+    // Returns the odometry pose
     public Pose2d getPose() {
         return odoPose;
     }
 
 
-
+    // Gets quaternion from the IMU
     public Rotation3d getQuaternion() {
         Rotation3d output = new Rotation3d(
             IMU.getQuaternionX()/2*Math.PI, IMU.getQuaternionY()/2*Math.PI, IMU.getQuaternionZ()/2*Math.PI
@@ -129,6 +133,7 @@ public class PositioningSubsystem extends SubsystemBase {
         }
     }
 
+    // zeros the odometry position
     public void zeroPosition(Boolean update){
         if(update){
             odometry.resetPosition(IMU.getRotation2d(), swerveBaseSubsystem.getSwervePositions(), new Pose2d(new Translation2d(0,0), IMU.getRotation2d()));

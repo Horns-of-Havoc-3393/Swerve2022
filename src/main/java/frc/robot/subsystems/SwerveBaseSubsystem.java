@@ -22,6 +22,7 @@ import frc.robot.Constants.swerveModConstants.driveConstants;
 
 public class SwerveBaseSubsystem extends SubsystemBase {
 
+    // Initializes the subsystems for each swerve module
     private final SwerveModSubsystem frontLeftMod = new SwerveModSubsystem(
         swerveModConstants.mod4.drivingMotorID, swerveModConstants.mod4.turningMotorID, swerveModConstants.mod4.encoderID,
         swerveModConstants.mod4.inverted, swerveModConstants.mod4.driveInverted, swerveModConstants.mod4.encoderOffset
@@ -94,6 +95,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
     public SwerveBaseSubsystem(PositioningSubsystem positioningSubsystem) {
 
+        // NetworkTable init for telemetry
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable table = inst.getTable("/debug/robot");
         anglePub = table.getDoubleTopic("gyroAngle").publish();
@@ -129,12 +131,14 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         NetworkTable FMSInfo = inst.getTable("/FMSInfo");
         redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
 
+        // Locations of swerve modules
         frontLeftLoc = new Translation2d(-driveConstants.kTrack/2, driveConstants.kWheelBase/2);
         backLeftLoc = new Translation2d(-driveConstants.kTrack/2, -driveConstants.kWheelBase/2);
         frontRightLoc = new Translation2d(driveConstants.kTrack/2, driveConstants.kWheelBase/2);
         backRightLoc = new Translation2d(driveConstants.kTrack/2, -driveConstants.kWheelBase/2);
 
 
+        // Init positioning subsystem
         this.positioningSubsystem = positioningSubsystem;
         positioningSubsystem.initOdometry(this);
 
@@ -147,6 +151,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         );
 
 
+        // PID controllers
         lateralPID1 = new PIDController(lateralPPub.get(), lateralIPub.get(), lateralDPub.get());
         lateralPID2 = new PIDController(lateralPPub.get(), lateralIPub.get(), lateralDPub.get());
         rotationalPID = new PIDController(rotationalPPub.get(), rotationalIPub.get(), rotationalDPub.get());
@@ -156,6 +161,8 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
     }
 
+
+    // Updates the cooefficients of the PID values
     public void updateTurnPIDs(){
         frontLeftMod.updatePID();
         frontRightMod.updatePID();
@@ -168,7 +175,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
     }
 
     
-
+    // Returns yaw angle of the robot
     public Rotation2d getBaseAngle() {
         double rawAngle = positioningSubsystem.getYawAngle();
         Rotation2d angle = Rotation2d.fromDegrees(rawAngle);
@@ -176,12 +183,14 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         return angle;
     }
 
+    // Returns yaw rate of the robot
     public double getBaseRate() {
         double rate = positioningSubsystem.getRotationVelocity();
         ratePub.set(rate);
         return rate;
     }
 
+    // Gathers the positions of all of the swerve modules
     public SwerveModulePosition[] getSwervePositions() {
         SwerveModulePosition[] output = {
             frontLeftMod.getModulePosition(),
@@ -192,6 +201,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         return output;
     }
 
+    // Moves the robot towards a poit in absolute space
     public void toPoint(Pose2d targetPoint) {
         double newTheta = targetPoint.getRotation().times(-1).minus(Rotation2d.fromDegrees(180)).minus(Rotation2d.fromDegrees(positioningSubsystem.getYawAngle())).getRadians();
 
@@ -219,6 +229,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         }
     }
 
+    // Calculates acceleration limits
     private double[] doAccelerationLimit(double xAxis, double yAxis, double thetaAxis){
 
         double[] output = {
@@ -229,13 +240,17 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         return output;
     }
 
+    // Resets the current position of odometry to a provided value
     public void setPosition(double x, double y){
         positioningSubsystem.setPosition(x, y);
     }
 
+    // Sets the speed of the robot oriented to the field
     public void setFieldOriented(double xAxis, double yAxis, double thetaAxis, boolean absolute) {
         double theta = thetaAxis;
         if(absolute == false){
+
+            // accleration limits and speed multipliers
             double[] axes = doAccelerationLimit(xAxis, yAxis, thetaAxis);
             xAxis = axes[0]*driveConstants.kSpeedMultiplier;
             yAxis = axes[1]*driveConstants.kSpeedMultiplier;
@@ -247,6 +262,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
             thetaPub.set(thetaAxis*driveConstants.kThetaMultiplier);
         }
 
+        // Creates chassis speeds instance
         ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             xAxis, yAxis, 
             thetaAxis,
@@ -256,11 +272,16 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
         constantPub.set(Math.log(theta)/Math.log(this.getBaseRate()));
 
+        // Calculates swerve states and moves them
         SwerveModuleState[] targetStates = swerveKinematics.toSwerveModuleStates(speeds);
         this.setSwerveState(targetStates);
     }
 
+
+    // non field-orented swerve control
     public void setRelative(double xAxis, double yAxis, double thetaAxis) {
+
+        // acceleration limits and speed multipliers
         double[] axes = doAccelerationLimit(xAxis, yAxis, thetaAxis);
         xAxis = axes[0];
         yAxis = axes[1];
@@ -270,6 +291,8 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         xPub.set(xAxis*driveConstants.kSpeedMultiplier);
         thetaPub.set(thetaAxis*driveConstants.kThetaMultiplier);
 
+
+        // Directly sends relative chassis speeds to the swerve modules
         ChassisSpeeds speeds;
 
         if(!redSub.get()){
@@ -282,16 +305,21 @@ public class SwerveBaseSubsystem extends SubsystemBase {
         this.setSwerveState(targetStates);
     }
 
+
+    // Applies swerve module states to the swerve modules
     public void setSwerveState(SwerveModuleState[] targetStates) {
 
-        
+        // makes sure no wheel is moving faster than the max speed
         SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, driveConstants.kMaxSpeedMPS);
 
+        // sends swerve stuff through telemetry
         double[] swerveTargets = {(targetStates[0].angle.getDegrees()),
             (targetStates[1].angle.getDegrees()),
             (targetStates[2].angle.getDegrees()),
             (targetStates[3].angle.getDegrees())};
         SmartDashboard.putNumberArray("swerveTargets", swerveTargets);
+
+        // Sets the states of all the individual modules
         frontLeftMod.setState(targetStates[0]);
         backLeftMod.setState(targetStates[1]);
         frontRightMod.setState(targetStates[2]);
