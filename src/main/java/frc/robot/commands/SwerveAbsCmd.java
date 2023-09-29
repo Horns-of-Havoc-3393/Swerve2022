@@ -23,6 +23,8 @@ public class SwerveAbsCmd extends CommandBase {
   
 
   public SwerveAbsCmd(SwerveBaseSubsystem swerveBaseSubsystem) {
+
+    // NetworkTable init for telemetry
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable FMSInfo = inst.getTable("/FMSInfo");
     redSub = FMSInfo.getBooleanTopic("IsRedAlliance").subscribe(false);
@@ -41,6 +43,8 @@ public class SwerveAbsCmd extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+
+    // Sends the axes to the swerve subsystem
     double xAxis = RobotContainer.driveController.getRawAxis(0);
     double yAxis = -RobotContainer.driveController.getRawAxis(1);
     double thetaAxis = RobotContainer.driveController.getRawAxis(4);

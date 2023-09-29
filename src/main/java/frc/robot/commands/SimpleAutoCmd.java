@@ -26,6 +26,7 @@ public class SimpleAutoCmd extends CommandBase{
 
     @Override
     public void execute(){
+        // This is dumb
         if(System.currentTimeMillis()<startingTime+1000){
             if(redSub.get()){
                 swerveBaseSubsystem.setFieldOriented(-1, 0.0, 0.0, true);

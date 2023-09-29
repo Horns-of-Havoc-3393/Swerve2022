@@ -21,8 +21,8 @@ import frc.robot.subsystems.SwerveBaseSubsystem;
 
 public class FollowPathCmd extends CommandBase{
 
-    
-    Trajectory[] trajectories = new Trajectory[autoConstants.selectedPath.length];
+    // initialized a bunch of variables
+    Trajectory[] trajectories = new Trajectory[autoConstants.selectedPath.length]; // list of individual trajectories
 
     long startTime = System.currentTimeMillis();
 
@@ -40,6 +40,8 @@ public class FollowPathCmd extends CommandBase{
 
 
     public FollowPathCmd(SwerveBaseSubsystem swerveBaseSubsystem){
+
+        // NetworkTable initialization for telemetry
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         NetworkTable table = inst.getTable("/debug/auto");
         elapsedPub = table.getDoubleTopic("elapsed").publish();
@@ -51,9 +53,10 @@ public class FollowPathCmd extends CommandBase{
         field = new Field2d();
 
 
-        this.swerveBaseSubsystem = swerveBaseSubsystem;
+        this.swerveBaseSubsystem = swerveBaseSubsystem; // set a local instance of the swerve subsystem
         addRequirements(swerveBaseSubsystem);
 
+        // Adds all of the paths specified in constants to the list of paths
         for(int i=0; i<autoConstants.selectedPath.length; i++){
             try {
                 Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve("paths/output/" + autoConstants.selectedPath[i] + ".wpilib.json");
@@ -67,6 +70,7 @@ public class FollowPathCmd extends CommandBase{
 
     }
 
+    // Sets the current path and sets the position of the robot to the first point of the trajectory
     private void initPath(int path){
         selectedPub.set(path);
         swerveBaseSubsystem.setPosition(trajectories[path].sample(0).poseMeters.getX(), trajectories[path].sample(0).poseMeters.getY());
@@ -77,16 +81,24 @@ public class FollowPathCmd extends CommandBase{
     @Override
     public void execute() {
 
+        // Finds elapsed time in seconds
         double elapsed = (System.currentTimeMillis()-startTime);
         elapsed = elapsed/1000.0;
         elapsedPub.set(elapsed);
+        
+        // Gets point on trajectory x seconds ahaid
         Trajectory.State point = trajectories[selectedPath].sample((elapsed)+autoConstants.lookAhaid);
         Rotation2d endRotation = trajectories[selectedPath].sample(trajectories[selectedPath].getTotalTimeSeconds()).poseMeters.getRotation();
+
         Pose2d newPose = new Pose2d(point.poseMeters.getTranslation(), endRotation);
+
+        // inverts everything for when you are on the opposite team
         if(redSub.get()){
             newPose = new Pose2d(16.54-newPose.getX(), newPose.getY(), newPose.getRotation());
         }
-        swerveBaseSubsystem.toPoint(newPose);
+
+
+        swerveBaseSubsystem.toPoint(newPose); // tells the robot to go to the point
         field.setRobotPose(newPose);
         SmartDashboard.putData("PathTarget", field);
 
