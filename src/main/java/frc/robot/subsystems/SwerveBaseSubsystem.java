@@ -176,7 +176,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
 
     
     // Returns yaw angle of the robot
-    public Rotation2d getBaseAngle() {
+    private Rotation2d getBaseAngle() {
         double rawAngle = positioningSubsystem.getYawAngle();
         Rotation2d angle = Rotation2d.fromDegrees(rawAngle);
         anglePub.set(angle.getDegrees());
@@ -184,7 +184,7 @@ public class SwerveBaseSubsystem extends SubsystemBase {
     }
 
     // Returns yaw rate of the robot
-    public double getBaseRate() {
+    private double getBaseRate() {
         double rate = positioningSubsystem.getRotationVelocity();
         ratePub.set(rate);
         return rate;
